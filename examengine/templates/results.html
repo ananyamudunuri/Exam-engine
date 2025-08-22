@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .wrong-answer {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quiz Results</h1>
+    <div id="results-container">
+        <p>Your score: <span id="score"></span></p>
+        <div id="detailed-results"></div>
+        <button id="back-to-home">Back to Home</button>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const score = localStorage.getItem('score');
+            const detailedResults = JSON.parse(localStorage.getItem('detailedResults'));
+            document.getElementById("score").innerText = score;
+
+            const detailedResultsContainer = document.getElementById("detailed-results");
+            detailedResults.forEach(result => {
+                const resultItem = document.createElement("div");
+                const selectedOptionsText = result.selected_options.map(optionId => {
+                    const option = result.options ? result.options.find(opt => opt.id === optionId) : null;
+                    return option ? option.text : `Option ${optionId}`;
+                }).join(', ');
+
+                const correctOptionsText = result.correct_options.map(optionId => {
+                    const option = result.options ? result.options.find(opt => opt.id === optionId) : null;
+                    return option ? option.text : `Option ${optionId}`;
+                }).join(', ');
+
+                const selectedOptionsSorted = result.selected_options.slice().sort().toString();
+                const correctOptionsSorted = result.correct_options.slice().sort().toString();
+                if (selectedOptionsSorted !== correctOptionsSorted) {
+                    resultItem.innerHTML = `
+                        <h3>Question: ${result.question_text}</h3>
+                        <p>Selected Options: ${selectedOptionsText}</p>
+                        <p>Correct Options: ${correctOptionsText}</p>
+                    `;
+                    resultItem.classList.add("wrong-answer");
+                }
+                detailedResultsContainer.appendChild(resultItem);
+            });
+
+            document.getElementById("back-to-home").addEventListener("click", function() {
+                window.location.href = '/';
+            });
+        });
+    </script>
+</body>
+</html>

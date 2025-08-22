@@ -1,0 +1,162 @@
+<!-- filepath: /c:/Users/infor/Downloads/examengine/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Welcome to the Quiz</h1>
+    <div id="initial-container">
+        <label for="num-questions">Number of Questions:</label>
+        <input type="number" id="num-questions" name="num-questions" min="1" required>
+        <label for="start-question">Starting Question:</label>
+        <input type="number" id="start-question" name="start-question" min="1" required>
+        <select id="test-select">
+            <!-- Options will be populated dynamically -->
+        </select>
+        <button id="start-test">Start Test</button>
+    </div>
+    <div id="quiz-container" style="display: none;">
+        <form id="quiz-form">
+            <div id="question-number"></div>
+            <div id="question-container"></div>
+            <button type="button" id="prev-question" style="display: none;">Previous</button>
+            <button type="button" id="next-question" style="display: none;">Next</button>
+            <button type="submit" id="submit-quiz" style="display: none;">Submit Answers</button>
+        </form>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Fetch and populate the test options
+            fetch("/tests/")
+                .then(response => response.json())
+                .then(tests => {
+                    const testSelect = document.getElementById("test-select");
+                    tests.forEach(test => {
+                        const option = document.createElement("option");
+                        option.value = test.id;
+                        option.textContent = test.name;
+                        testSelect.appendChild(option);
+                    });
+                });
+
+            document.getElementById("start-test").addEventListener("click", function() {
+                const numQuestions = parseInt(document.getElementById("num-questions").value);
+                const startQuestion = parseInt(document.getElementById("start-question").value) - 1;
+                const testId = document.getElementById("test-select").value;
+
+                if (isNaN(numQuestions) || isNaN(startQuestion) || numQuestions <= 0 || startQuestion < 0) {
+                    alert("Please enter valid numbers for the number of questions and the starting question.");
+                    return;
+                }
+
+                document.getElementById("initial-container").style.display = "none";
+                document.getElementById("quiz-container").style.display = "block";
+                fetch(`/tests/${testId}/questions/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (startQuestion >= data.length || startQuestion + numQuestions > data.length) {
+                            alert("The number of questions selected is out of range.");
+                            document.getElementById("initial-container").style.display = "block";
+                            document.getElementById("quiz-container").style.display = "none";
+                            return;
+                        }
+
+                        let currentQuestionIndex = 0;
+                        const questions = data.slice(startQuestion, startQuestion + numQuestions);
+                        const questionContainer = document.getElementById("question-container");
+                        const questionNumber = document.getElementById("question-number");
+                        const prevButton = document.getElementById("prev-question");
+                        const nextButton = document.getElementById("next-question");
+                        const submitButton = document.getElementById("submit-quiz");
+                        const answers = {};
+
+                        function showQuestion(index) {
+                            questionContainer.innerHTML = '';
+                            questionNumber.innerHTML = `Question ${index + 1} of ${questions.length}`;
+                            const question = questions[index];
+                            const questionItem = document.createElement("div");
+                            questionItem.innerHTML = `<strong>${question.text}</strong>`;
+                            const optionsList = document.createElement("ul");
+                            if (question.options) {
+                                question.options.forEach(option => {
+                                    const optionItem = document.createElement("li");
+                                    const inputType = question.options.filter(opt => opt.is_correct).length > 1 ? "checkbox" : "radio";
+                                    const checked = answers[`question-${question.id}`] && answers[`question-${question.id}`].includes(option.id.toString()) ? 'checked' : '';
+                                    optionItem.innerHTML = `
+                                        <label>
+                                            <input type="${inputType}" name="question-${question.id}" value="${option.id}" ${checked}>
+                                            ${option.text}
+                                        </label>
+                                    `;
+                                    optionsList.appendChild(optionItem);
+                                });
+                            }
+                            questionItem.appendChild(optionsList);
+                            questionContainer.appendChild(questionItem);
+
+                            prevButton.style.display = index > 0 ? 'inline' : 'none';
+                            nextButton.style.display = index < questions.length - 1 ? 'inline' : 'none';
+                            submitButton.style.display = index === questions.length - 1 ? 'inline' : 'none';
+                        }
+
+                        prevButton.addEventListener("click", function() {
+                            if (currentQuestionIndex > 0) {
+                                saveAnswers();
+                                currentQuestionIndex--;
+                                showQuestion(currentQuestionIndex);
+                            }
+                        });
+
+                        nextButton.addEventListener("click", function() {
+                            if (currentQuestionIndex < questions.length - 1) {
+                                saveAnswers();
+                                currentQuestionIndex++;
+                                showQuestion(currentQuestionIndex);
+                            }
+                        });
+
+                        function saveAnswers() {
+                            const formData = new FormData(document.getElementById("quiz-form"));
+                            formData.forEach((value, key) => {
+                                if (!answers[key]) {
+                                    answers[key] = [];
+                                }
+                                if (!answers[key].includes(value)) {
+                                    answers[key].push(value);
+                                }
+                            });
+                        }
+
+                        document.getElementById("quiz-form").addEventListener("submit", function(event) {
+                            event.preventDefault();
+                            saveAnswers();
+                            fetch(`/tests/${testId}/submit-answers/`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(answers)
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result && result.score !== undefined && result.detailed_results !== undefined) {
+                                    localStorage.setItem('score', result.score);
+                                    localStorage.setItem('detailedResults', JSON.stringify(result.detailed_results));
+                                    window.location.href = '/results.html';
+                                } else {
+                                    alert("An error occurred while submitting your answers. Please try again.");
+                                }
+                            });
+                        });
+
+                        showQuestion(currentQuestionIndex);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

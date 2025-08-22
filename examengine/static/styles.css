@@ -1,0 +1,87 @@
+/* filepath: /c:/Users/infor/Downloads/examengine/static/styles.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #87ceeb; /* Sky blue background color */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+h1 {
+    color: #2c3e50;
+}
+
+label {
+    margin-right: 10px;
+}
+
+input[type="number"] {
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #3498db; /* Blue background color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+#quiz-container {
+    background-color: #ffffff; /* White background for quiz container */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+#question-number {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+#question-container {
+    margin-bottom: 20px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+li ul {
+    margin-top: 5px;
+    padding-left: 20px;
+}
+
+li ul li {
+    background: #e0e0e0;
+}
